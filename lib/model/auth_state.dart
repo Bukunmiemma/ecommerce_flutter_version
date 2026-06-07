@@ -5,6 +5,7 @@ class AuthState {
   final bool isLoading;
   final User? user;
   final String? error;
+
   final bool isSigningUp;
   final bool isGoogleLoading;
   AuthState({
@@ -31,11 +32,12 @@ class AuthState {
     String? error,
     bool? isSigningUp,
     bool? isGoogleLoading,
+    bool clearError = false,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
       user: user ?? this.user,
-      error: error ?? this.error,
+      error: clearError ? null : error ?? this.error,
       isSigningUp: isSigningUp ?? this.isSigningUp,
 
       isGoogleLoading: isGoogleLoading ?? this.isGoogleLoading,

@@ -18,10 +18,8 @@ class GoogleAuthService {
       final GoogleSignInAuthentication auth = await user.authentication;
       final String? idToken = auth.idToken;
       if (idToken == null) {
-        print("ID Token is null");
         return null;
       }
-      print("id token : $idToken");
 
       final response = await http.post(
         Uri.parse("$baseUrl/auth/google"),
@@ -29,7 +27,6 @@ class GoogleAuthService {
 
         body: jsonEncode({'idToken': idToken}),
       );
-      print("RAW RESPONSE: ${response.body}");
 
       if (response.body.isEmpty) return null;
       final data = jsonDecode(response.body);
@@ -39,12 +36,10 @@ class GoogleAuthService {
       final userMap = data["userResponse"];
 
       if (token == null || userMap == null) {
-        print("Token or user is null joooor");
         return null;
       }
 
       if (response.statusCode != 200) {
-        print('Login failed ${response.body}');
         return null;
       }
       final authResponse = AuthResponse.fromJson(data);
@@ -60,7 +55,6 @@ class GoogleAuthService {
       //   "token": token,
       // });
     } catch (e) {
-      print("Login Failed: $e");
       return null;
     }
   }

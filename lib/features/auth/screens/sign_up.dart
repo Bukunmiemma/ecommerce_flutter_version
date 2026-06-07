@@ -23,9 +23,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  Map<String, String> errors = {};
-  bool loading = false;
-
   void handleSignup() async {
     //  FRONTEND VALIDATION FIRST
     if (!_formKey.currentState!.validate()) return;
@@ -37,15 +34,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           emailController.text,
           passwordController.text,
         );
-    print(errors["general"]);
 
     if (!mounted) return;
     if (success) {
       Navigator.pushReplacementNamed(context, "/login");
-    } else {
-      setState(() {
-        errors["general"] = 'Sign up failed';
-      });
     }
   }
 
@@ -53,7 +45,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     final success = await ref
         .read(authControllerProvider.notifier)
         .signInWithGoogle();
-    print(errors["general"]);
     if (!mounted) return;
 
     if (success) {
@@ -71,6 +62,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
+
+    ref.listen(authControllerProvider, (previous, next) {
+      if (next.error != null && next.error != previous?.error) {
+        showSnackBar(context, next.error!);
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -93,7 +90,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     controller: nameController,
                     isPassword: false,
                     hintText: "Name",
-                    errorText: errors["name"],
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return "Name is required";
@@ -108,7 +104,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     hintText: "Email",
 
                     isPassword: false,
-                    errorText: errors["email"],
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return "Email is required";
@@ -120,13 +115,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     },
                   ),
                   const SizedBox(height: 15),
-
                   CustomTextfield(
                     controller: passwordController,
                     hintText: "Password",
                     isPassword: true,
-
-                    errorText: errors["password"],
                     validator: (value) {
                       if (value == null || value.length < 6) {
                         return "Password must be at least 6 characters";
@@ -135,74 +127,77 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-
-                  if (errors["general"] != null)
-                    showSnackBar(context, errors["general"].toString()),
-
-                  const SizedBox(height: 10),
-
-                  authState.isLoading
-                      ? const CircularProgressIndicator()
-                      : ElevatedButton(
-                          onPressed: authState.isSigningUp
-                              ? null
-                              : handleSignup,
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: Size(double.infinity, 45),
-                            backgroundColor: Colors.black,
+                  ElevatedButton(
+                    onPressed: authState.isSigningUp ? null : handleSignup,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 45),
+                      backgroundColor: Colors.black,
+                    ),
+                    child: authState.isSigningUp
+                        ? CircularProgressIndicator(strokeWidth: 2)
+                        : const Text(
+                            "Sign Up",
+                            style: TextStyle(color: Colors.white, fontSize: 16),
                           ),
-                          child: authState.isSigningUp
-                              ? CircularProgressIndicator(strokeWidth: 2)
-                              : const Text(
-                                  "Sign Up",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                        ),
+                  ),
 
                   //
                   const SizedBox(height: 30),
-
-                  if (errors["general"] != null)
-                    showSnackBar(context, errors["general"].toString()),
-
-                  authState.isLoading
-                      ? const CircularProgressIndicator()
-                      : ElevatedButton(
-                          onPressed: authState.isSigningUp
-                              ? null
-                              : handleGoogleLogin,
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: Size(double.infinity, 45),
-                            backgroundColor: Colors.black,
-                          ),
-                          child: authState.isSigningUp
-                              ? CircularProgressIndicator(strokeWidth: 2)
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    SvgPicture.asset(
-                                      'assets/google_icon.svg',
-                                      width: 20,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Sign in with google',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ],
+                  ElevatedButton(
+                    onPressed: authState.isGoogleLoading
+                        ? null
+                        : handleGoogleLogin,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 45),
+                      backgroundColor: Colors.black,
+                    ),
+                    child: authState.isGoogleLoading
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SvgPicture.asset(
+                                'assets/google_icon.svg',
+                                width: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Sign in with google',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
                                 ),
-
-                          //  Row(
-                          //   children: [
-                          //   ],
-                          // ),
+                              ),
+                            ],
+                          ),
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Already have an account? ",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
                         ),
+                      ),
+                      SizedBox(width: 3),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/login');
+                        },
+                        child: Text(
+                          'Login',
+                          style: TextStyle(color: Colors.blue, fontSize: 14),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

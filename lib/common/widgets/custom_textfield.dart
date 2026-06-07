@@ -4,14 +4,12 @@ import 'package:flutter/material.dart';
 class CustomTextfield extends StatefulWidget {
   final TextEditingController controller;
   final String hintText;
-  final String? errorText;
   final String? Function(String?)? validator;
   final bool isPassword;
   const CustomTextfield({
     super.key,
     required this.controller,
     required this.hintText,
-    required this.errorText,
     required this.validator,
     required this.isPassword,
   });
@@ -37,7 +35,6 @@ class _CustomTextfieldState extends State<CustomTextfield> {
       },
       decoration: InputDecoration(
         hintText: widget.hintText,
-        errorText: widget.errorText,
 
         border: const OutlineInputBorder(
           borderSide: BorderSide(color: Colors.black38),

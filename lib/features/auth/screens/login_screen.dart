@@ -13,66 +13,12 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  // final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
-  // final AppLinks _appLinks = AppLinks();
-
-  // StreamSubscription? _sub;
-  // bool _handled = false;
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   initDeepLinks();
-  // }
-
-  // Future<void> initDeepLinks() async {
-  //   try {
-  //     final uri = await _appLinks.getInitialLink();
-
-  //     if (uri != null) {
-  //       handleUri(uri);
-  //     }
-
-  //     // background / running app
-  //     _sub = _appLinks.uriLinkStream.listen((uri) {
-  //       if (uri != null) {
-  //         handleUri(uri);
-  //       }
-  //     });
-  //   } catch (e) {
-  //     print("Deep link error: $e");
-  //   }
-  // }
-
-  // void handleUri(Uri uri) {
-  //   if (_handled) return;
-  //   _handled = true;
-  //   if (uri.host == "reset-password") {
-  //     final token = uri.queryParameters['token'];
-
-  //     if (token != null) {
-  //       navigatorKey.currentState?.push(
-  //         MaterialPageRoute(builder: (_) => ResetPasswordScreen(token: token)),
-  //       );
-  //     }
-  //   }
-  // }
-
-  // @override
-  // void dispose() {
-  //   _sub?.cancel();
-  //   super.dispose();
-  // }
-
   final AuthService authService = AuthService();
 
   final _formKey = GlobalKey<FormState>();
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-
-  Map<String, String> errors = {};
-  bool loading = false;
 
   void handleLogin() async {
     //  FRONTEND VALIDATION FIRST
@@ -85,16 +31,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
     if (success) {
       Navigator.pushReplacementNamed(context, "/home");
-    } else {
-      setState(() {
-        errors["general"] = 'login failed';
-      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
+
+    ref.listen(authControllerProvider, (previous, next) {
+      if (next.error != null && next.error != previous?.error) {
+        showSnackBar(context, next.error!);
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -119,7 +67,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 hintText: "Email",
 
                 isPassword: false,
-                errorText: errors["email"],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return "Email is required";
@@ -135,7 +82,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 controller: passwordController,
                 hintText: "Password",
                 isPassword: true,
-                errorText: errors["password"],
                 validator: (value) {
                   if (value == null || value.length < 6) {
                     return "Password must be at least 6 characters";
@@ -143,28 +89,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
 
-              if (errors["general"] != null)
-                showSnackBar(context, errors["general"].toString()),
               const SizedBox(height: 10),
 
               // const SizedBox(height: 30),
               // if (authState.error != null)
               //   showSnackBar(context, authState.error.toString()),
-              authState.isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: handleLogin,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size(double.infinity, 45),
-                        backgroundColor: Colors.black,
-                      ),
-                      child: Text(
+              ElevatedButton(
+                onPressed: handleLogin,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(double.infinity, 45),
+                  backgroundColor: Colors.black,
+                ),
+                child: authState.isLoading
+                    ? const CircularProgressIndicator()
+                    : Text(
                         "Login",
                         style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
-                    ),
+              ),
               // CustomButton(text: 'Login', onTap: ),
               const SizedBox(height: 5),
               Row(
@@ -175,8 +118,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Navigator.pushNamed(context, "/forgot-password");
                     },
                     child: const Text(
-                      "Forgot Password ?",
-                      style: TextStyle(color: Colors.black),
+                      "Forgot Password ? click here",
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "You don't have an account? ",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                  SizedBox(width: 2),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/');
+                    },
+                    child: Text(
+                      'Sign up',
+                      style: TextStyle(color: Colors.blue, fontSize: 14),
                     ),
                   ),
                 ],

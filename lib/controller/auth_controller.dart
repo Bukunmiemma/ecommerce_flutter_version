@@ -1,17 +1,22 @@
 import 'package:amazon_ui/features/auth/services/auth_service.dart';
 import 'package:amazon_ui/features/auth/services/google_auth_service.dart';
+import 'package:amazon_ui/state_management/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import 'package:amazon_ui/model/auth_state.dart';
 
+// final authService = ref.read(authServiceProvider);
+
 class AuthController extends StateNotifier<AuthState> {
-  final AuthService _authService;
+  final Ref ref;
   final GoogleAuthService _googleAuthService;
 
-  AuthController(this._authService, this._googleAuthService)
+  AuthController(this.ref, this._googleAuthService)
     : super(AuthState.initial()) {
     checkAuth();
   }
+  AuthService get _authService => ref.read(authServiceProvider);
 
   Future<void> checkAuth() async {
     state = state.copyWith(isLoading: true);
@@ -25,31 +30,23 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<bool> signup(String name, String email, String password) async {
-    state = state.copyWith(isLoading: true, isSigningUp: true, error: null);
+    state = state.copyWith(isSigningUp: true, clearError: true);
     try {
       final res = await _authService.signUp(name, email, password);
       if (res != null) {
-        state = state.copyWith(
-          user: res.user,
-          isLoading: false,
-          isSigningUp: false,
-        );
+        state = state.copyWith(user: res.user, isSigningUp: false);
         return true;
       }
-      state = state.copyWith(
-        isLoading: false,
-        error: "Signup failed",
-        isSigningUp: false,
-      );
+      state = state.copyWith(error: "Signup failed", isSigningUp: false);
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: "Something went wrong");
+      state = state.copyWith(isSigningUp: false, error: "Something went wrong");
       return false;
     }
   }
 
   Future<bool> signInWithGoogle() async {
-    state = state.copyWith(isGoogleLoading: true, error: null);
+    state = state.copyWith(isGoogleLoading: true, clearError: true);
 
     try {
       final res = await _googleAuthService.signInWithGoogle();
@@ -59,19 +56,22 @@ class AuthController extends StateNotifier<AuthState> {
         return true;
       }
 
-      state = state.copyWith(isLoading: false, error: "Google sign-in failed");
+      state = state.copyWith(
+        isGoogleLoading: false,
+        error: "Google sign-in failed",
+      );
       return false;
     } catch (e) {
       state = state.copyWith(
         isGoogleLoading: false,
-        error: "Something went wrong",
+        error: "Google sign in failed",
       );
       return false;
     }
   }
 
   Future<bool> login(String email, String password) async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final res = await _authService.login(email, password);
       if (res != null) {
@@ -85,24 +85,56 @@ class AuthController extends StateNotifier<AuthState> {
       return false;
     }
   }
+
+  //forgot password
+  Future<bool> forgotPassword(String email) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    final response = await _authService.forgotPassword(email);
+
+    state = state.copyWith(isLoading: false);
+
+    if (response["success"]) {
+      return true;
+    } else {
+      state = state.copyWith(error: response["message"]);
+      return false;
+    }
+  }
+
+  // VERIFY OTP
+
+  Future<bool> verifyOtp(String email, String otp) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    final response = await _authService.verifyOtp(email, otp);
+
+    state = state.copyWith(isLoading: false);
+
+    if (response["success"]) {
+      return true;
+    } else {
+      state = state.copyWith(error: response["message"]);
+
+      return false;
+    }
+  }
+
+  // RESET PASSWORD
+
+  Future<bool> resetPassword(String email, String password) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    final response = await _authService.resetPassword(email, password);
+
+    state = state.copyWith(isLoading: false);
+
+    if (response["success"]) {
+      return true;
+    } else {
+      state = state.copyWith(error: response["message"]);
+
+      return false;
+    }
+  }
 }
-
-//Future<bool> checkAuth() async {
-    //   final token = await _authService.getToken();
-
-    //   if (token == null) return false;
-
-    //   try {
-    //     // Optional: call backend /validate
-    //     final user = await _authService.getCurrentUser(token);
-
-    //     if (user != null) {
-    //       state = state.copyWith(user: user);
-    //       return true;
-    //     }
-
-    //     return false;
-    //   } catch (e) {
-    //     return false;
-    //   }
-    // }

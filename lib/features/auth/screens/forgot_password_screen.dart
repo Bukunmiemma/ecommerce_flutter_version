@@ -1,43 +1,46 @@
-import 'dart:convert';
-
 import 'package:amazon_ui/common/widgets/custom_textfield.dart';
+import 'package:amazon_ui/features/auth/screens/otp_screen.dart';
 import 'package:amazon_ui/secrets.dart';
+import 'package:amazon_ui/state_management/auth_controller_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ForgotPasswordScreen extends StatefulWidget {
+class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _ForgotPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final baseUrl = ipAddress;
-  final _formKey = GlobalKey<FormState>();
+class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
+  TextEditingController emailController = TextEditingController();
 
-  final TextEditingController emailController = TextEditingController();
-  Map<String, String> errors = {};
+  void sendOtp() async {
+    final success = await ref
+        .read(authControllerProvider.notifier)
+        .forgotPassword(emailController.text.trim());
 
-  Future<void> sendResetLink() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final response = await http.post(
-      Uri.parse("$baseUrl/auth/forgot-password"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"email": emailController.text}),
-    );
-
-    if (response.statusCode == 200) {
-      print("Reset email sent");
+    if (!mounted) return;
+    if (success) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OtpScreen(email: emailController.text.trim()),
+        ),
+      );
     } else {
-      print("Failed");
+      final error = ref.read(authControllerProvider).error;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error ?? "Failed to send OTP")));
     }
-    print("Send reset email to ${emailController.text}");
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -49,44 +52,40 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
       ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                CustomTextfield(
-                  controller: emailController,
-                  isPassword: false,
-                  hintText: "Email",
-                  errorText: errors["password"],
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Email is required";
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 20),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CustomTextfield(
+                controller: emailController,
+                isPassword: false,
+                hintText: "Email",
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Email is required";
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 20),
 
-                ElevatedButton(
-                  onPressed: () {
-                    sendResetLink();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 45),
-                    backgroundColor: Colors.black,
-                  ),
-                  child: Text(
-                    "Send Reset Link",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
+              ElevatedButton(
+                onPressed: authState.isLoading ? null : sendOtp,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(double.infinity, 45),
+                  backgroundColor: Colors.black,
                 ),
-              ],
-            ),
+                child: authState.isLoading
+                    ? CircularProgressIndicator()
+                    : const Text(
+                        "Send OTP",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+              ),
+            ],
           ),
         ),
       ),

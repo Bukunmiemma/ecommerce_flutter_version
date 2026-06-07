@@ -43,11 +43,17 @@ class AuthService {
     String password,
   ) async {
     try {
-      final response = await http.post(
-        Uri.parse("$baseUrl/auth/signup"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"name": name, "email": email, "password": password}),
-      );
+      final response = await http
+          .post(
+            Uri.parse("$baseUrl/auth/signup"),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({
+              "name": name,
+              "email": email,
+              "password": password,
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
 
       final data = jsonDecode(response.body);
       final authResponse = AuthResponse.fromJson(data);
@@ -60,8 +66,6 @@ class AuthService {
 
       return authResponse;
     } catch (e) {
-      print("Signup error: $e");
-
       return null;
     }
   }
@@ -70,10 +74,12 @@ class AuthService {
     final token = await getToken();
 
     // Optional: notify backend
-    await http.post(
-      Uri.parse("$baseUrl/auth/logout"),
-      headers: {"Authorization": "Bearer $token"},
-    );
+    await http
+        .post(
+          Uri.parse("$baseUrl/auth/logout"),
+          headers: {"Authorization": "Bearer $token"},
+        )
+        .timeout(const Duration(seconds: 20));
 
     await clearToken();
 
@@ -107,10 +113,12 @@ class AuthService {
     // final token = await storage.read(key: "jwt");
 
     try {
-      final response = await http.get(
-        Uri.parse("$baseUrl/auth/get-current-user"),
-        headers: {"Authorization": "Bearer $token"},
-      );
+      final response = await http
+          .get(
+            Uri.parse("$baseUrl/auth/get-current-user"),
+            headers: {"Authorization": "Bearer $token"},
+          )
+          .timeout(const Duration(seconds: 20));
 
       print(response.body);
       if (response.statusCode == 200) {
@@ -136,11 +144,13 @@ class AuthService {
   //Login
   Future<AuthResponse?> login(String email, String password) async {
     try {
-      final res = await http.post(
-        Uri.parse("$baseUrl/auth/login"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"email": email, "password": password}),
-      );
+      final res = await http
+          .post(
+            Uri.parse("$baseUrl/auth/login"),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({"email": email, "password": password}),
+          )
+          .timeout(const Duration(seconds: 20));
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
@@ -152,6 +162,60 @@ class AuthService {
       }
     } catch (e) {
       print(" Login error:$e");
+    }
+  }
+
+  // SEND OTP
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse("$baseUrl/auth/forgot-password"),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({"email": email}),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      return {"success": response.statusCode == 200, "message": response.body};
+    } catch (e) {
+      return {"success": false, "message": e.toString()};
+    }
+  }
+
+  // VERIFY OTP
+  Future<Map<String, dynamic>> verifyOtp(String email, String otp) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse("$baseUrl/auth/verify-otp"),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({"email": email, "otp": otp}),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      return {"success": response.statusCode == 200, "message": response.body};
+    } catch (e) {
+      return {"success": false, "message": e.toString()};
+    }
+  }
+
+  // RESET PASSWORD
+  Future<Map<String, dynamic>> resetPassword(
+    String email,
+    String newPassword,
+  ) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse("$baseUrl/auth/reset-password"),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({"email": email, "newPassword": newPassword}),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      return {"success": response.statusCode == 200, "message": response.body};
+    } catch (e) {
+      return {"success": false, "message": e.toString()};
     }
   }
 }

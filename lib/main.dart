@@ -1,12 +1,8 @@
-import 'dart:async';
-
 import 'package:amazon_ui/constants/global_variables.dart';
-import 'package:amazon_ui/features/auth/auth_gate.dart';
-import 'package:amazon_ui/features/auth/protected_Route.dart';
+
 import 'package:amazon_ui/features/auth/screens/forgot_password_screen.dart';
 import 'package:amazon_ui/features/auth/screens/home_screen.dart';
 import 'package:amazon_ui/features/auth/screens/login_screen.dart';
-import 'package:amazon_ui/features/auth/screens/reset_password_screen.dart';
 import 'package:amazon_ui/features/auth/screens/sign_up.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,7 +18,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Amazon UI',
-
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         scaffoldBackgroundColor: GlobalVariables.backgroundColor,
         colorScheme: ColorScheme.light(primary: GlobalVariables.secondaryColor),
@@ -40,7 +36,6 @@ class MyApp extends StatelessWidget {
 
         '/forgot-password': (context) => ForgotPasswordScreen(),
       },
-      home: SignUpScreen(),
     );
   }
 }
