@@ -15,31 +15,62 @@ class ResetPasswordScreen extends ConsumerStatefulWidget {
 }
 
 class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
-  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
 
+
   void resetPassword() async {
-    final success = await ref
-        .read(authControllerProvider.notifier)
-        .resetPassword(widget.email, passwordController.text.trim());
 
-    if (!mounted) return;
+  if (newPasswordController.text.trim() !=
+      confirmPasswordController.text.trim()) {
 
-    if (success && passwordController.text != confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Password reset successful")),
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Passwords do not match"),
+      ),
+    );
+
+    return;
+  }
+
+  final success = await ref
+      .read(authControllerProvider.notifier)
+      .resetPassword(
+        widget.email,
+        newPasswordController.text.trim(),
+        confirmPasswordController.text.trim(),
       );
 
-      Navigator.push(context, MaterialPageRoute(builder: (_) => LoginScreen()));
-    } else {
-      final error = ref.read(authControllerProvider).error;
+  if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error ?? "Reset failed")));
-    }
+  if (success) {
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Password reset successful"),
+      ),
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LoginScreen(),
+      ),
+    );
+
+  } else {
+
+    final error = ref.read(authControllerProvider).error;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error ?? "Reset failed"),
+      ),
+    );
   }
+}
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +95,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             const SizedBox(height: 20),
 
             CustomTextfield(
-              controller: passwordController,
+              controller: newPasswordController,
               hintText: "New Password",
               isPassword: true,
               validator: (value) {
@@ -82,7 +113,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
             CustomTextfield(
               controller: confirmPasswordController,
-              hintText: "New Password",
+              hintText: "Confirm Password",
               isPassword: true,
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -108,7 +139,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   : const Text(
                       "Reset Password",
                       style: TextStyle(
-                        color: Colors.black,
+                        color: Colors.white,
                         fontSize: 22,
                         fontWeight: FontWeight.w600,
                       ),

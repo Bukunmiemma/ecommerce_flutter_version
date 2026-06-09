@@ -57,11 +57,7 @@ class AuthService {
 
       final data = jsonDecode(response.body);
       final authResponse = AuthResponse.fromJson(data);
-      // if (response.statusCode == 200 || response.statusCode == 201) {
-
-      //   return authResponse;
-      // }
-      // print("Signup failed: ${response.body}");
+    
       await saveToken(authResponse.token);
 
       return authResponse;
@@ -203,13 +199,18 @@ class AuthService {
   Future<Map<String, dynamic>> resetPassword(
     String email,
     String newPassword,
+        String confirmPassword,
+      
   ) async {
     try {
       final response = await http
           .post(
             Uri.parse("$baseUrl/auth/reset-password"),
             headers: {"Content-Type": "application/json"},
-            body: jsonEncode({"email": email, "newPassword": newPassword}),
+            body: jsonEncode({"email": email, "newPassword": newPassword,
+            "confirmPassword":confirmPassword
+            
+            }),
           )
           .timeout(const Duration(seconds: 20));
 

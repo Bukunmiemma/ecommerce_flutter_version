@@ -15,7 +15,7 @@ class GoogleAuthService {
       await _googleSignIn.initialize(serverClientId: webClientId);
       final GoogleSignInAccount? user = await _googleSignIn.authenticate();
       if (user == null) return null;
-      final GoogleSignInAuthentication auth = await user.authentication;
+      final GoogleSignInAuthentication auth =  user.authentication;
       final String? idToken = auth.idToken;
       if (idToken == null) {
         return null;
@@ -47,19 +47,9 @@ class GoogleAuthService {
       await storage.write(key: "jwt", value: authResponse.token);
 
       return authResponse;
-      // return User.fromMap({
-      //   "id": userMap["id"].toString(),
-      //   "email": userMap["email"],
-      //   "name": userMap["name"],
-      //   "role": userMap["role"], //  IMPORTANT mapping
-      //   "token": token,
-      // });
     } catch (e) {
       return null;
     }
   }
 
-  // Future<void> saveToken(String token) async {
-  //   await storage.write(key: "jwt", value: token);
-  // }
 }

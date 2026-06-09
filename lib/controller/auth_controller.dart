@@ -122,10 +122,10 @@ class AuthController extends StateNotifier<AuthState> {
 
   // RESET PASSWORD
 
-  Future<bool> resetPassword(String email, String password) async {
+  Future<bool> resetPassword(String email, String newpassword, String confirmPassword) async {
     state = state.copyWith(isLoading: true, error: null);
 
-    final response = await _authService.resetPassword(email, password);
+    final response = await _authService.resetPassword(email, newpassword, confirmPassword);
 
     state = state.copyWith(isLoading: false);
 
